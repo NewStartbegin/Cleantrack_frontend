@@ -27,7 +27,7 @@ jobs:
     defaults:
       run:
         # DISESUAIKAN: Nama folder di gambar lu adalah 'cleantrack-frontend'
-        working-directory: cleantrack-frontend
+        working-directory: Cleantrack_frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
           node-version: 20
           cache: npm
           # DISESUAIKAN: Path lock file harus sesuai working-directory
-          cache-dependency-path: cleantrack-frontend/package-lock.json
+          cache-dependency-path: Cleantrack_frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -59,7 +59,7 @@ jobs:
 
   cd:
     name: Deploy Frontend (EC2)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
     steps:
