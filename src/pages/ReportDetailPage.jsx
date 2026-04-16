@@ -116,6 +116,13 @@ export default function ReportDetailPage() {
       minute: '2-digit',
     });
   };
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    return url.replace(
+      'https://s3uts.s3.ap-southeast-1.amazonaws.com',
+      '/s3-image'
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-white py-12">
@@ -134,7 +141,7 @@ export default function ReportDetailPage() {
           {report.photo_url ? (
             <div className="w-full h-96 bg-green-100 overflow-hidden">
               <img
-                src={report.photo_url}
+                src={getImageUrl(report.photo_url)}
                 alt={report.title}
                 className="w-full h-full object-cover"
                 onError={(e) => {
