@@ -52,6 +52,8 @@ export default function LoginPage() {
         window.dispatchEvent(new Event('userChanged'));
         toast.success('Login berhasil!');
         navigate('/');
+      } else {
+        toast.error(response.message || 'Login gagal');
       }
     } catch (error) {
       toast.error(error.message || 'Login gagal');
@@ -75,6 +77,8 @@ export default function LoginPage() {
         window.dispatchEvent(new Event('userChanged'));
         toast.success('Registrasi berhasil!');
         navigate('/');
+      } else {
+        toast.error(response.message || 'Registrasi gagal');
       }
     } catch (error) {
       toast.error(error.message || 'Registrasi gagal');
