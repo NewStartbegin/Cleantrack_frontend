@@ -2,7 +2,7 @@ name: Frontend CI/CD
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main] # Sesuaikan jadi 'main' kalau branch utama lu main
     paths:
       - 'cleantrack-frontend/**'
       - '.github/workflows/deploy.yml'
@@ -24,10 +24,6 @@ jobs:
   ci:
     name: Build Frontend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        # DISESUAIKAN: Nama folder di gambar lu adalah 'cleantrack-frontend'
-        working-directory: Cleantrack_frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,16 +33,17 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          # DISESUAIKAN: Path lock file harus sesuai working-directory
-          cache-dependency-path: Cleantrack_frontend/package-lock.json
+          # Jurus sakti biar gak error path: nyari otomatis di mana pun package-lock berada
+          cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        working-directory: cleantrack-frontend
         run: npm ci
 
       - name: Build
+        working-directory: cleantrack-frontend
         env:
           VITE_BASE_PATH: /
-          # DISESUAIKAN: Tambahkan ENV untuk API Base URL kalau perlu
           VITE_API_BASE_URL: /api
         run: npm run build
 
@@ -54,12 +51,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          # DISESUAIKAN: Vite secara default build ke folder 'dist' di dalam folder proyek
           path: cleantrack-frontend/dist
 
   cd:
     name: Deploy Frontend (EC2)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/main')
     needs: ci
     runs-on: ubuntu-latest
     steps:
@@ -87,7 +83,11 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
+            # Pastikan folder target ada
             sudo mkdir -p /var/www/html
+            # Bersihkan folder lama
             sudo rm -rf /var/www/html/*
+            # Copy file baru dari tempat transit ke folder Nginx
             sudo cp -r /home/${{ secrets.EC2_USERNAME }}/frontend-dist/* /var/www/html/
+            # Set owner agar Nginx bisa baca filenya
             sudo chown -R www-data:www-data /var/www/html
