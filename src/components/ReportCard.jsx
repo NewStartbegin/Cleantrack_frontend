@@ -13,6 +13,13 @@ export default function ReportCard({ report }) {
       return '-';
     }
   };
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    return url.replace(
+      'https://s3uts.s3.ap-southeast-1.amazonaws.com',
+      '/s3-image'
+    );
+  };
 
   return (
     <Link
@@ -22,7 +29,7 @@ export default function ReportCard({ report }) {
       {report.photo_url ? (
         <div className="w-full h-40 overflow-hidden bg-green-100">
           <img
-            src={report.photo_url}
+            src={getImageUrl(report.photo_url)}
             alt={report.title}
             className="w-full h-full object-cover hover:scale-105 transition"
             onError={(e) => {
