@@ -1,0 +1,93 @@
+name: Frontend CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cleantrack-frontend/**'
+      - '.github/workflows/deploy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'cleantrack-frontend/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: EC2_UTS
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # DISESUAIKAN: Nama folder di gambar lu adalah 'cleantrack-frontend'
+        working-directory: cleantrack-frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          # DISESUAIKAN: Path lock file harus sesuai working-directory
+          cache-dependency-path: cleantrack-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_BASE_PATH: /
+          # DISESUAIKAN: Tambahkan ENV untuk API Base URL kalau perlu
+          VITE_API_BASE_URL: /api
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          # DISESUAIKAN: Vite secara default build ke folder 'dist' di dalam folder proyek
+          path: cleantrack-frontend/dist
+
+  cd:
+    name: Deploy Frontend (EC2)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+
+      - name: Upload dist to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "dist/*"
+          target: "/home/${{ secrets.EC2_USERNAME }}/frontend-dist"
+          strip_components: 1
+
+      - name: Deploy files on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            sudo mkdir -p /var/www/html
+            sudo rm -rf /var/www/html/*
+            sudo cp -r /home/${{ secrets.EC2_USERNAME }}/frontend-dist/* /var/www/html/
+            sudo chown -R www-data:www-data /var/www/html
