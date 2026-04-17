@@ -175,7 +175,7 @@ export const deleteSchedule = async (id, userId) => {
 export const uploadPhoto = async (formData) => {
   try {
     // Don't set Content-Type header manually - axios will handle it with correct boundary
-    const response = await api.post('/upload/photo', formData);
+    const response = await api.post('/upload', formData);
     console.log('uploadPhoto response:', response.data);
     return response.data;
   } catch (error) {
